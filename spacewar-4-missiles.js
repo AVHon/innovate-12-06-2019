@@ -51,7 +51,7 @@ let drawShip = function(ship){
   }
 }
 
-// This function moves a spaceship (or other things).
+// This function moves a spaceship or a missile.
 let moveThing = function(thing){
   // Change the thing's speed if its engine is firing.
   // If the thing doesn't have an engine, this harmlessly does nothing.
@@ -73,8 +73,27 @@ let moveThing = function(thing){
   if(thing.y >= turtle.canvas.height){thing.y -= turtle.canvas.height;}
 }
 
+let missiles = []; // At the start of the game, there are no missiles.
+
+let fireMissile = function(ship){
+  // Go to where the ship is.
+  turtle.penUp();
+  turtle.jumpTo(ship.x, ship.y);
+  turtle.turnTo(ship.angle);
+  turtle.move(9); // Go to the front of the ship (so it doesn't shoot itself).
+  
+  // Make a missile at the front of the ship, going the way the ship is going.
+  let missile = {x: turtle.getX(),
+                 y: turtle.getY(),
+                 speedX: ship.speedX + Math.cos(ship.angle*Math.PI/180)*4,
+                 speedY: ship.speedY - Math.sin(ship.angle*Math.PI/180)*4,
+                 age: 0};
+  missiles.push(missile); // Add the missile to the list of all missiles.
+  ship.firing = false; // Ships only fire 1 missile at a time.
+}
+
 let ship = {x: 20, y: 20, angle: 0, speedX: 0, speedY: 0, throttle: 0,
-            color: turtle.makeColor(60,197,24), turn:0};
+            color: turtle.makeColor(60,197,24), turn:0, firing: false};
 
 let stars = []; // Start with no stars.
 let addStars = function(n){
@@ -96,6 +115,43 @@ let drawStar = function(star){
   }
 }
 
+let checkMissileDeath = function(missile){
+  // Missiles die after a certain amount of time.
+  let missileLifetimeSeconds = 10;
+  missile.age = missile.age + 1;
+  if(missile.age > missileLifetimeSeconds * desiredFrameRate){
+    missile.die = true;
+  }
+  // Missiles explode and die if they hit a ship.
+  // (Only works if the ships have already been drawn!)
+  turtle.jumpTo(missile.x, missile.y);
+  if(turtle.colorsEqual(turtle.getCanvasColor(), ship.color)){
+    missile.die = true;
+    missile.explode = true;
+  }
+}
+
+let drawMissile = function(missile){
+  turtle.jumpTo(missile.x, missile.y);
+  turtle.setColor(turtle.makeColor(255, 0, 0));
+  
+  if(missile.explode){
+    // If told to explode, draw an explosion!
+    turtle.circle(3);
+    turtle.circle(6);
+    turtle.circle(9);
+    turtle.circle(12);
+  } else {
+    // Otherwise, just draw a small circle.
+    turtle.tapPen();
+    turtle.circle(1);
+  }
+}
+
+let missileIsAlive = function(missile){
+  return !missile.die;
+}
+
 // controls go in one of these 2 places
 document.addEventListener("keydown", function(keyEvent){
   // Code that runs when you press a key goes in here.
@@ -106,6 +162,8 @@ document.addEventListener("keydown", function(keyEvent){
     ship.turn = 5; // Turn counterclockwise (left) with "a".
   } else if(keyEvent.key == "d"){
     ship.turn = -5; // Turn clockwise (right) with "d".
+  } else if(keyEvent.key == "w"){
+    ship.firing = true; // Fire a missile with "w".
   }
 });
 
@@ -130,14 +188,25 @@ let gameFrame = function(now) {
   turtle.setColor(turtle.makeColor(0,0,0));
   turtle.clear();
 
+  // Make new missiles, if necessary.
+  if(ship.firing){fireMissile(ship);}
+
   // Move everything that moves.
   moveThing(ship);
+  missiles.forEach(moveThing);
   
   // Draw the ship.
   drawShip(ship);
   
+  // Check if the missiles have hit anything, or have become too old and died.
+  missiles.forEach(checkMissileDeath);
+  
   // Draw everything else.
+  missiles.forEach(drawMissile);
   stars.forEach(drawStar);
+  
+  // Remove missiles that died (of old age or explosion).
+  missiles = missiles.filter(missileIsAlive);
   
   turtle.show(); // Put pixels on the screen -- must be last!
 };
