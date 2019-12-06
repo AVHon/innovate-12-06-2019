@@ -76,6 +76,26 @@ let moveThing = function(thing){
 let ship = {x: 20, y: 20, angle: 0, speedX: 0, speedY: 0, throttle: 0,
             color: turtle.makeColor(60,197,24), turn:0};
 
+let stars = []; // Start with no stars.
+let addStars = function(n){
+  if(n<=0){
+    return;
+  }
+  stars.push({x: Math.random()*turtle.canvas.width,
+              y: Math.random()*turtle.canvas.height});
+  addStars(n-1);
+}
+addStars(100); // Make 100 random stars at the start of the game.
+
+let drawStar = function(star){
+  turtle.jumpTo(star.x, star.y);
+  // Don't draw stars where ships are. (only works if ships are already drawn)
+  if(! turtle.colorsEqual(turtle.getCanvasColor(), ship.color)){
+    turtle.setColor(turtle.makeColor(255,255,255));
+    turtle.tapPen();
+  }
+}
+
 // controls go in one of these 2 places
 document.addEventListener("keydown", function(keyEvent){
   // Code that runs when you press a key goes in here.
@@ -115,6 +135,9 @@ let gameFrame = function(now) {
   
   // Draw the ship.
   drawShip(ship);
+  
+  // Draw everything else.
+  stars.forEach(drawStar);
   
   turtle.show(); // Put pixels on the screen -- must be last!
 };
