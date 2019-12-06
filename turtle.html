@@ -165,7 +165,7 @@ function Turtle() {
 	this.circle = function(radius){
 		let radiusError = function(x,y){return Math.abs(x*x + y*y - radius*radius);}
 		let x=radius, y=0;
-		while(x>=y){
+		while(x>=(y-1)){
 			// draw 8 octants at once
 			this.colorPixel(this.x+x, this.y+y, this.paintColor);
 			this.colorPixel(this.x-x, this.y+y, this.paintColor);
