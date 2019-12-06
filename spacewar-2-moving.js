@@ -35,22 +35,54 @@ let drawShip = function(ship){
   // Make a white mark in the middle of the ship.
   turtle.setColor(turtle.makeColor(255,255,255));
   turtle.tapPen();
+  
+  // Draw the engine flame if the engine is firing.
+  if(ship.throttle > 0){
+    turtle.turnTo(ship.angle + 180); // Face the back of the ship.
+    turtle.penUp();
+    turtle.move(4); // Go to the back of the ship.
+    // Make the flame waver in angle and length.
+    let flameAngle = Math.random()*20 - 10;
+    let flameLength = 1 + Math.random() * ship.throttle * 32;
+    turtle.turn(flameAngle);
+    turtle.setColor(turtle.makeColor(255, 0, 0));
+    turtle.penDown();
+    turtle.move(flameLength); // Draw the flame.
+  }
 }
 
 // This function moves a spaceship (or other things).
 let moveThing = function(thing){
-  // Turn the thing.
+  // Change the thing's speed if its engine is firing.
+  // If the thing doesn't have an engine, this harmlessly does nothing.
+  if(thing.throttle > 0){
+    // Use trigonometry to calculate how hard the engine pushes ↔ and ↕.
+    thing.speedX += thing.throttle*Math.cos(thing.angle*Math.PI/180);
+    thing.speedY -= thing.throttle*Math.sin(thing.angle*Math.PI/180);
+  }
+  
+  // Move and turn the thing.
+  thing.x += thing.speedX;
+  thing.y += thing.speedY;
   thing.angle += thing.turn;
+
+  // Keep the thing inside the screen (the turtle's canvas).
+  if(thing.x < 0)                    {thing.x += turtle.canvas.width;}
+  if(thing.x >= turtle.canvas.width) {thing.x -= turtle.canvas.width;}
+  if(thing.y < 0)                    {thing.y += turtle.canvas.height;}
+  if(thing.y >= turtle.canvas.height){thing.y -= turtle.canvas.height;}
 }
 
-let ship = {x: 20, y: 20, angle: 0,
+let ship = {x: 20, y: 20, angle: 0, speedX: 0, speedY: 0, throttle: 0,
             color: turtle.makeColor(60,197,24), turn:0};
 
 // controls go in one of these 2 places
 document.addEventListener("keydown", function(keyEvent){
   // Code that runs when you press a key goes in here.
   console.log(keyEvent.key); // Print the name of the pressed key.
-  if(keyEvent.key == "a"){
+  if(keyEvent.key == "s"){
+    ship.throttle = 0.5; // Start firing the engine when "s" is pressed.
+  } else if(keyEvent.key == "a"){
     ship.turn = 5; // Turn counterclockwise (left) with "a".
   } else if(keyEvent.key == "d"){
     ship.turn = -5; // Turn clockwise (right) with "d".
@@ -58,7 +90,9 @@ document.addEventListener("keydown", function(keyEvent){
 });
 
 document.addEventListener("keyup", function(keyEvent){
-  if(keyEvent.key == "a" || keyEvent.key == "d"){
+  if(keyEvent.key == "s"){
+    ship.throttle = 0; // Stop firing the engine when "s" is released.
+  } else if(keyEvent.key == "a" || keyEvent.key == "d"){
     ship.turn = 0; // Stop turning when "a" or "d" is released.
   }
 });
