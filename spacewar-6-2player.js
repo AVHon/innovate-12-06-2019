@@ -116,6 +116,9 @@ let fireMissile = function(ship){
 let ship = {x: 20, y: 20, angle: 0, speedX: 0, speedY: 0, throttle: 0,
             color: turtle.makeColor(60,197,24), turn:0, firing: false};
 
+let ship2 = {x: 340, y: 340, angle: 180, speedX: 0, speedY: 0, throttle: 0,
+            color: turtle.makeColor(167,24,90), turn:0, firing: false};
+
 let stars = []; // Start with no stars.
 let addStars = function(n){
   if(n<=0){
@@ -130,7 +133,8 @@ addStars(100); // Make 100 random stars at the start of the game.
 let drawStar = function(star){
   turtle.jumpTo(star.x, star.y);
   // Don't draw stars where ships are. (only works if ships are already drawn)
-  if(! turtle.colorsEqual(turtle.getCanvasColor(), ship.color)){
+  if(! turtle.colorsEqual(turtle.getCanvasColor(), ship.color) &&
+     ! turtle.colorsEqual(turtle.getCanvasColor(), ship2.color)){
     turtle.setColor(turtle.makeColor(255,255,255));
     turtle.tapPen();
   }
@@ -146,7 +150,8 @@ let checkMissileDeath = function(missile){
   // Missiles explode and die if they hit a ship.
   // (Only works if the ships have already been drawn!)
   turtle.jumpTo(missile.x, missile.y);
-  if(turtle.colorsEqual(turtle.getCanvasColor(), ship.color)){
+  if(turtle.colorsEqual(turtle.getCanvasColor(), ship.color) ||
+     turtle.colorsEqual(turtle.getCanvasColor(), ship2.color)){
     missile.die = true;
     missile.explode = true;
   }
@@ -185,6 +190,14 @@ document.addEventListener("keydown", function(keyEvent){
     ship.turn = -5; // Turn clockwise (right) with "d".
   } else if(keyEvent.key == "w"){
     ship.firing = true; // Fire a missile with "w".
+  } else if(keyEvent.key == "ArrowDown"){
+    ship2.throttle = 0.5;
+  } else if(keyEvent.key == "ArrowLeft"){
+    ship2.turn = 5;
+  } else if(keyEvent.key == "ArrowRight"){
+    ship2.turn = -5;
+  } else if(keyEvent.key == "ArrowUp"){
+    ship2.firing = true;
   }
 });
 
@@ -193,6 +206,10 @@ document.addEventListener("keyup", function(keyEvent){
     ship.throttle = 0; // Stop firing the engine when "s" is released.
   } else if(keyEvent.key == "a" || keyEvent.key == "d"){
     ship.turn = 0; // Stop turning when "a" or "d" is released.
+  }else if(keyEvent.key == "ArrowDown"){
+    ship2.throttle = 0;
+  }else if(keyEvent.key == "ArrowLeft" || keyEvent.key == "ArrowRight"){
+    ship2.turn = 0;
   }
 });
 
@@ -211,13 +228,16 @@ let gameFrame = function(now) {
 
   // Make new missiles, if necessary.
   if(ship.firing){fireMissile(ship);}
+  if(ship2.firing){fireMissile(ship2);}
 
   // Move everything that moves.
   moveThing(ship);
+  moveThing(ship2);
   missiles.forEach(moveThing);
   
-  // Draw the ship.
+  // Draw the ships.
   drawShip(ship);
+  drawShip(ship2);
   
   // Check if the missiles have hit anything, or have become too old and died.
   missiles.forEach(checkMissileDeath);
