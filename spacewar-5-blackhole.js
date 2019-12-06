@@ -6,6 +6,25 @@ let lastFrameTime = 0;
 
 let turtle = new Turtle();
 
+let blackHole = {x: turtle.canvas.width/2, y: turtle.canvas.height/2};
+
+let drawBlackHole = function(){
+  turtle.jumpTo(blackHole.x, blackHole.y);
+  turtle.setColor(turtle.makeColor(255,100,255));
+  turtle.circle(2+Math.random()*4);
+}
+
+// Given an object that gravity pulls on (must have x, y, speedX, and speedY),
+// modifies its speedX and speedY to reflect gravitational pull.
+let blackHolePull = function(body){
+  let distance = Math.sqrt(Math.pow(body.x - blackHole.x, 2) +
+                           Math.pow(body.y - blackHole.y, 2));
+  let force = Math.min(2, 4 / distance);
+  let direction = Math.atan2(blackHole.y - body.y, body.x - blackHole.x);
+  body.speedX = body.speedX - Math.cos(direction) * force;
+  body.speedY = body.speedY + Math.sin(direction) * force;
+}
+
 let drawShip = function(ship){
   turtle.jumpTo(ship.x, ship.y); // Go to where the ship is.
   turtle.turnTo(ship.angle); // Face the way the ship is facing.
@@ -53,6 +72,8 @@ let drawShip = function(ship){
 
 // This function moves a spaceship or a missile.
 let moveThing = function(thing){
+  blackHolePull(thing); // Change the thing's speed according to gravity.
+  
   // Change the thing's speed if its engine is firing.
   // If the thing doesn't have an engine, this harmlessly does nothing.
   if(thing.throttle > 0){
@@ -204,6 +225,7 @@ let gameFrame = function(now) {
   // Draw everything else.
   missiles.forEach(drawMissile);
   stars.forEach(drawStar);
+  drawBlackHole();
   
   // Remove missiles that died (of old age or explosion).
   missiles = missiles.filter(missileIsAlive);
